@@ -8,6 +8,13 @@ import android.support.v7.widget.Toolbar
 import android.view.View
 import android.view.Menu
 import android.view.MenuItem
+import android.accounts.Account
+import android.accounts.AccountManager
+import android.content.Context
+import android.content.Intent
+
+import com.google.android.gms.common.AccountPicker
+
 
 class MainActivity : AppCompatActivity() {
 
@@ -19,11 +26,28 @@ class MainActivity : AppCompatActivity() {
 
         val fab = findViewById(R.id.fab) as FloatingActionButton
         fab.setOnClickListener { view -> run{
-            Snackbar.make(view, "Test complited", Snackbar.LENGTH_LONG)
+            //normal account access
+            val manager = getSystemService(Context.ACCOUNT_SERVICE) as AccountManager
+            val accounts = manager.accounts
+            var message = ""
+            for(account in accounts){
+                message += " Account: " + account.name + " type " + account.type
+            }
+            //AccountPicker account access
+            requestAccountFromAccountPicker()
+
+            Snackbar.make(view, "Test complited" + message, Snackbar.LENGTH_LONG)
                     .setAction("Action", null).show()
             }
 
         }
+    }
+
+    fun requestAccountFromAccountPicker() {
+        //ask for user's account to select
+        val intent: Intent = AccountPicker.newChooseAccountIntent(null, null, arrayOf("com.google"), false, null, null, null, null)
+        startActivityForResult(intent, REQUEST_CODE_PICK_ACCOUNT)
+
     }
 
     override fun onCreateOptionsMenu(menu: Menu): Boolean {
@@ -44,5 +68,22 @@ class MainActivity : AppCompatActivity() {
         }
 
         return super.onOptionsItemSelected(item)
+    }
+
+    override protected  fun onActivityResult(requestCode:Int, resultCode:Int,  data:Intent){
+        if (requestCode == REQUEST_CODE_PICK_ACCOUNT && resultCode == RESULT_OK){
+            accountType = data.getStringExtra(AccountManager.KEY_ACCOUNT_TYPE)
+            accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME)
+            val message = accountName + " " + accountType;
+            val fab = findViewById(R.id.fab) as FloatingActionButton
+            Snackbar.make(fab, "Account selected:" + message, Snackbar.LENGTH_LONG)
+                    .setAction("Action", null).show()
+        }
+    }
+
+    companion object Static {
+        var accountName:String? = null
+        var accountType:String? = null
+        val REQUEST_CODE_PICK_ACCOUNT = 101
     }
 }
